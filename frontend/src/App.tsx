@@ -1,4 +1,4 @@
-import React from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
@@ -11,29 +11,89 @@ import VictimDashboard from './pages/VictimDashboard'
 import FindPoliceStation from './pages/FindPoliceStation'
 import './App.css'
 
-// Protected Route component
-const ProtectedRoute: React.FC<{
-  children: React.ReactNode;
-  allowedRoles: string[];
-}> = ({ children, allowedRoles }) => {
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  
-  if (!user) {
-    return <Navigate to="/login" />;
+function App() {
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Check token validity on app start and auth changes
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserRole(user.role);
+        setIsAuthenticated(true);
+        console.log("Auth state updated: User authenticated as", user.role);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
+        setUserRole(null);
+        console.log("Auth state cleared due to error");
+      }
+    } else {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      console.log("No authentication data found");
+    }
+    
+    setIsInitializing(false);
+  };
+
+  // Initial auth check
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  // Listen for auth changes
+  useEffect(() => {
+    const handleAuthChange = () => {
+      console.log("Auth change detected");
+      checkAuth();
+    };
+    
+    window.addEventListener('auth-change', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange); // For changes from other tabs
+    
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, []);
+
+  // Define protected route component
+  const ProtectedRoute = ({ children, role }: { children: JSX.Element, role?: string }) => {
+    console.log("Rendering protected route, auth:", isAuthenticated, "role:", userRole, "required:", role);
+    
+    if (isInitializing) {
+      return <div>Loading...</div>;
+    }
+    
+    if (!isAuthenticated) {
+      console.log("Access denied: Not authenticated");
+      return <Navigate to="/login" replace />;
+    }
+    
+    if (role && userRole !== role) {
+      console.log(`Access denied: Role mismatch (needed ${role}, has ${userRole})`);
+      return <Navigate to={`/dashboard/${userRole}`} replace />;
+    }
+    
+    return children;
+  };
+
+  if (isInitializing) {
+    return <div>Loading...</div>;
   }
 
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />;
-  }
-
-  return <>{children}</>;
-};
-
-const App: React.FC = () => {
   return (
     <Router>
       <div className="app">
-        <Navbar />
+        <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -47,7 +107,7 @@ const App: React.FC = () => {
           <Route
             path="/dashboard/police"
             element={
-              <ProtectedRoute allowedRoles={['police']}>
+              <ProtectedRoute role="police">
                 <PoliceDashboard />
               </ProtectedRoute>
             }
@@ -55,7 +115,7 @@ const App: React.FC = () => {
           <Route
             path="/dashboard/victim"
             element={
-              <ProtectedRoute allowedRoles={['victim']}>
+              <ProtectedRoute role="victim">
                 <VictimDashboard />
               </ProtectedRoute>
             }

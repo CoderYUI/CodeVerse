@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import '../styles/Signup.css';
+import axios from 'axios';
 
 const SignupContainer = styled.div`
   min-height: 100vh;
@@ -28,6 +29,13 @@ const Title = styled.h1`
   text-align: center;
 `;
 
+const Subtitle = styled.p`
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #666;
+`;
+
 const Form = styled.form`
   display: flex;
   flex-direction: column;
@@ -44,28 +52,6 @@ const Input = styled.input`
   &:focus {
     border-color: #1a237e;
     outline: none;
-  }
-`;
-
-const RoleToggle = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-`;
-
-const RoleButton = styled.button<{ active: boolean }>`
-  flex: 1;
-  padding: 1rem;
-  border: 2px solid ${props => props.active ? '#1a237e' : '#e0e0e0'};
-  border-radius: 10px;
-  background: ${props => props.active ? '#1a237e' : 'white'};
-  color: ${props => props.active ? 'white' : '#1a237e'};
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #1a237e;
   }
 `;
 
@@ -100,26 +86,65 @@ const LoginLink = styled.p`
   }
 `;
 
+const ErrorMessage = styled.div`
+  color: #e53935;
+  margin-bottom: 1rem;
+  text-align: center;
+`;
+
+const Loading = styled.div`
+  margin: 10px 0;
+  text-align: center;
+  color: #1a237e;
+`;
+
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'victim'
+    confirmPassword: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Store user data in localStorage
-    localStorage.setItem('user', JSON.stringify({
-      name: formData.name,
-      email: formData.email,
-      role: formData.role
-    }));
     
-    // Redirect to appropriate dashboard
-    navigate(`/dashboard/${formData.role}`);
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.password) {
+      setError('All fields are required');
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/police/register`, {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+      
+      // Store token and user data
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Redirect to dashboard
+      navigate('/dashboard/police');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setError(error.response?.data?.error || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,17 +154,14 @@ const Signup: React.FC = () => {
     });
   };
 
-  const handleRoleChange = (role: string) => {
-    setFormData({
-      ...formData,
-      role
-    });
-  };
-
   return (
     <SignupContainer>
       <SignupForm>
-        <Title>Create Account</Title>
+        <Title>Police Officer Registration</Title>
+        <Subtitle>Create an account to access the police dashboard</Subtitle>
+        
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        
         <Form onSubmit={handleSubmit}>
           <Input
             type="text"
@@ -165,23 +187,20 @@ const Signup: React.FC = () => {
             onChange={handleChange}
             required
           />
-          <RoleToggle>
-            <RoleButton
-              type="button"
-              active={formData.role === 'victim'}
-              onClick={() => handleRoleChange('victim')}
-            >
-              Victim
-            </RoleButton>
-            <RoleButton
-              type="button"
-              active={formData.role === 'police'}
-              onClick={() => handleRoleChange('police')}
-            >
-              Police Officer
-            </RoleButton>
-          </RoleToggle>
-          <SubmitButton type="submit">Sign Up</SubmitButton>
+          <Input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+          
+          {loading ? (
+            <Loading>Processing...</Loading>
+          ) : (
+            <SubmitButton type="submit">Create Account</SubmitButton>
+          )}
         </Form>
         <LoginLink>
           Already have an account? <a href="/login">Log in</a>
@@ -191,4 +210,4 @@ const Signup: React.FC = () => {
   );
 };
 
-export default Signup; 
+export default Signup;

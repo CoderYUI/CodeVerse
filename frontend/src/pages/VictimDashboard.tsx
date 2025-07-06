@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import type { Complaint } from '../types';
 import { mockComplaints } from '../data/mockData';
 import '../styles/Dashboard.css';
+import { complaintsAPI } from '../utils/api';
 
 const DashboardContainer = styled.div`
   min-height: 100vh;
@@ -163,19 +164,35 @@ const VictimDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Get user from localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      fetchComplaints();
     } else {
       navigate('/login');
     }
-
-    // Load mock complaints
-    setComplaints(mockComplaints);
   }, [navigate]);
+
+  const fetchComplaints = async () => {
+    setLoading(true);
+    try {
+      const response = await complaintsAPI.getAll();
+      setComplaints(response.data);
+    } catch (error: any) {
+      console.error('Error fetching complaints:', error);
+      setError(error.response?.data?.error || 'Failed to load complaints. Please try again.');
+      
+      // Fallback to mock data if API fails
+      setComplaints(mockComplaints);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleNewComplaint = () => {
     navigate('/analyze');
@@ -183,7 +200,7 @@ const VictimDashboard: React.FC = () => {
 
   const handleComplaintClick = (complaint: Complaint) => {
     // Navigate to complaint details
-    navigate(`/complaints/${complaint.id}`);
+    navigate(`/fir-report/${complaint.id}`);
   };
 
   if (!user) {
@@ -219,32 +236,40 @@ const VictimDashboard: React.FC = () => {
 
         <ComplaintsSection>
           <SectionTitle>Your Complaints</SectionTitle>
-          <ComplaintList>
-            {complaints.map(complaint => (
-              <ComplaintCard
-                key={complaint.id}
-                onClick={() => handleComplaintClick(complaint)}
-              >
-                <ComplaintHeader>
-                  <ComplaintTitle>
-                    Complaint #{complaint.id}
-                  </ComplaintTitle>
-                  <ComplaintStatus status={complaint.status}>
-                    {complaint.status.charAt(0).toUpperCase() + complaint.status.slice(1)}
-                  </ComplaintStatus>
-                </ComplaintHeader>
-                <ComplaintDetails>
-                  <p>{complaint.text}</p>
-                  {complaint.firNumber && (
-                    <p>FIR Number: {complaint.firNumber}</p>
-                  )}
-                  {complaint.appliedSections && (
-                    <p>Applied Sections: {complaint.appliedSections.join(', ')}</p>
-                  )}
-                </ComplaintDetails>
-              </ComplaintCard>
-            ))}
-          </ComplaintList>
+          {loading ? (
+            <p>Loading complaints...</p>
+          ) : error ? (
+            <p style={{ color: 'red' }}>{error}</p>
+          ) : complaints.length === 0 ? (
+            <p>No complaints found.</p>
+          ) : (
+            <ComplaintList>
+              {complaints.map(complaint => (
+                <ComplaintCard
+                  key={complaint.id}
+                  onClick={() => handleComplaintClick(complaint)}
+                >
+                  <ComplaintHeader>
+                    <ComplaintTitle>
+                      Complaint #{complaint.id}
+                    </ComplaintTitle>
+                    <ComplaintStatus status={complaint.status}>
+                      {complaint.status.charAt(0).toUpperCase() + complaint.status.slice(1)}
+                    </ComplaintStatus>
+                  </ComplaintHeader>
+                  <ComplaintDetails>
+                    <p>{complaint.text.substring(0, 150)}...</p>
+                    {complaint.firNumber && (
+                      <p>FIR Number: {complaint.firNumber}</p>
+                    )}
+                    {complaint.appliedSections && (
+                      <p>Applied Sections: {complaint.appliedSections.join(', ')}</p>
+                    )}
+                  </ComplaintDetails>
+                </ComplaintCard>
+              ))}
+            </ComplaintList>
+          )}
         </ComplaintsSection>
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
@@ -257,4 +282,4 @@ const VictimDashboard: React.FC = () => {
   );
 };
 
-export default VictimDashboard; 
+export default VictimDashboard;

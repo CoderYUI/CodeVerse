@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import '../styles/Navbar.css';
+import { authAPI } from '../utils/api';
+
+// Define props interface for Navbar
+interface NavbarProps {
+  isAuthenticated?: boolean;
+  userRole?: string | null;
+}
 
 const Nav = styled.nav`
   background: white;
@@ -117,42 +124,87 @@ const Button = styled.button`
   }
 `;
 
-const ProfileButton = styled.button`
-  padding: 0.5rem 1rem;
-  border: none;
-  background: none;
-  color: #1a237e;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: color 0.3s ease;
-
-  &:hover {
-    color: #283593;
-  }
-`;
-
-const Navbar: React.FC = () => {
+const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, userRole }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<any>(null);
+  const [authState, setAuthState] = useState({
+    isAuthenticated: isAuthenticated || false,
+    userRole: userRole || null
+  });
 
+  // Update internal state when props change
   useEffect(() => {
-    // Check for user in localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    if (isAuthenticated !== undefined) {
+      setAuthState({
+        isAuthenticated: isAuthenticated,
+        userRole: userRole || null
+      });
     }
+  }, [isAuthenticated, userRole]);
+
+  // Also listen for auth changes directly
+  useEffect(() => {
+    const checkAuthFromStorage = () => {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
+      if (token && userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          setUser(userData);
+          setAuthState({
+            isAuthenticated: true,
+            userRole: userData.role
+          });
+          console.log("Navbar: Auth detected from storage", userData.role);
+        } catch (error) {
+          console.error('Navbar: Error parsing user data', error);
+          setAuthState({
+            isAuthenticated: false,
+            userRole: null
+          });
+        }
+      } else {
+        setUser(null);
+        setAuthState({
+          isAuthenticated: false,
+          userRole: null
+        });
+        console.log("Navbar: No auth detected in storage");
+      }
+    };
+
+    // Check auth on mount and path change
+    checkAuthFromStorage();
+
+    // Set up listeners for auth changes
+    const handleAuthChange = () => {
+      console.log("Navbar: Auth change event detected");
+      checkAuthFromStorage();
+    };
+    
+    window.addEventListener('auth-change', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
   }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    console.log("Logging out...");
+    authAPI.logout();
+    setAuthState({
+      isAuthenticated: false,
+      userRole: null
+    });
     setUser(null);
     navigate('/');
   };
 
+  // Use internal state for rendering
   return (
     <Nav>
       <NavContainer>
@@ -165,9 +217,10 @@ const Navbar: React.FC = () => {
           <NavLink to="/about">About</NavLink>
           <NavLink to="/legal-guide">Legal Guide</NavLink>
           <NavLink to="/find-police-station">Find Police Station</NavLink>
-          {user ? (
+          
+          {authState.isAuthenticated ? (
             <>
-              <NavLink to={`/dashboard/${user.role}`}>Dashboard</NavLink>
+              <NavLink to={`/dashboard/${authState.userRole}`}>Dashboard</NavLink>
               <Button onClick={handleLogout}>Logout</Button>
             </>
           ) : (
@@ -182,4 +235,4 @@ const Navbar: React.FC = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;

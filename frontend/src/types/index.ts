@@ -6,7 +6,8 @@ export interface User {
   id: string;
   name: string;
   role: UserRole;
-  email: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface LegalSuggestion {
@@ -37,10 +38,13 @@ export interface Complaint {
   text: string;
   language: Language;
   status: 'pending' | 'analyzed' | 'filed' | 'rejected';
-  createdAt: string;
+  complainantName: string;
+  complainantId: string;
+  filedAt: string;
   assignedOfficer?: string;
   firNumber?: string;
   appliedSections?: string[];
+  analysisResult?: AnalysisResult;
 }
 
 export interface LegalRight {
@@ -56,4 +60,22 @@ export interface IPCSection {
   punishment: string;
   isCognizable: boolean;
   isBailable: boolean;
-} 
+}
+
+export interface PoliceStation {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+}
