@@ -1,0 +1,27 @@
+<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="160" cy="300" rx="90" ry="15" fill="#e0e0e0"/>
+  <g>
+    <!-- Body -->
+    <rect x="145" y="120" width="30" height="80" rx="15" fill="#FFD700"/>
+    <!-- Dress -->
+    <path d="M160 200 Q140 260 100 290 Q160 310 220 290 Q180 260 160 200 Z" fill="#1a237e"/>
+    <!-- Head -->
+    <circle cx="160" cy="110" r="22" fill="#FFD700" stroke="#1a237e" stroke-width="3"/>
+    <!-- Blindfold -->
+    <rect x="145" y="115" width="30" height="8" rx="4" fill="#1a237e"/>
+    <!-- Left Arm -->
+    <rect x="110" y="130" width="50" height="10" rx="5" transform="rotate(-20 110 130)" fill="#FFD700"/>
+    <!-- Right Arm -->
+    <rect x="160" y="130" width="50" height="10" rx="5" transform="rotate(20 160 130)" fill="#FFD700"/>
+    <!-- Scale -->
+    <g>
+      <line x1="110" y1="140" x2="90" y2="180" stroke="#FFD700" stroke-width="4"/>
+      <line x1="210" y1="140" x2="230" y2="180" stroke="#FFD700" stroke-width="4"/>
+      <ellipse cx="90" cy="185" rx="12" ry="5" fill="#fff" stroke="#FFD700" stroke-width="2"/>
+      <ellipse cx="230" cy="185" rx="12" ry="5" fill="#fff" stroke="#FFD700" stroke-width="2"/>
+    </g>
+    <!-- Sword -->
+    <rect x="152" y="200" width="16" height="60" rx="8" fill="#FFD700"/>
+    <polygon points="160,260 168,260 164,300 164,300" fill="#1a237e"/>
+  </g>
+</svg> 

@@ -1,0 +1,99 @@
+@media (max-width: 768px) {
+  .page-container {
+    padding: 5rem 1rem 2rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .section {
+    padding: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .accordion-header {
+    padding: 1rem;
+  }
+
+  .accordion-title {
+    font-size: 1.1rem;
+  }
+
+  .accordion-content {
+    padding: 1rem;
+  }
+}
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section {
+  animation: slideDown 0.5s ease-out;
+}
+
+.accordion-item {
+  animation: slideDown 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+.accordion-item:nth-child(1) { animation-delay: 0.1s; }
+.accordion-item:nth-child(2) { animation-delay: 0.2s; }
+.accordion-item:nth-child(3) { animation-delay: 0.3s; }
+.accordion-item:nth-child(4) { animation-delay: 0.4s; }
+
+/* Hover effects */
+.accordion-header:hover {
+  background-color: #f5f5f5;
+}
+
+.section-badge {
+  transition: transform 0.3s ease;
+}
+
+.section-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Accordion transitions */
+.accordion-content {
+  transition: all 0.3s ease-in-out;
+}
+
+.accordion-header span {
+  transition: transform 0.3s ease;
+}
+
+.accordion-header[aria-expanded="true"] span {
+  transform: rotate(45deg);
+}
+
+/* Legal details hover effect */
+.legal-details {
+  transition: box-shadow 0.3s ease;
+}
+
+.legal-details:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Detail item hover effect */
+.detail-item {
+  transition: background-color 0.3s ease;
+}
+
+.detail-item:hover {
+  background-color: #f8f9fa;
+} 

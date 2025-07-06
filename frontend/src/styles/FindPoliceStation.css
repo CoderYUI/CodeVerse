@@ -1,0 +1,120 @@
+.find-police-station {
+  min-height: 100vh;
+  padding: 8rem 2rem 2rem;
+  background: #f8f9fa;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 2.5rem;
+  color: #1a237e;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.map-container {
+  height: 600px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.station-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.station-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.station-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.station-name {
+  font-size: 1.4rem;
+  color: #1a237e;
+  margin-bottom: 1rem;
+}
+
+.station-info {
+  color: #666;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.station-info svg {
+  width: 20px;
+  height: 20px;
+  color: #1a237e;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.loading-message {
+  text-align: center;
+  color: #666;
+  margin: 2rem 0;
+}
+
+@media (max-width: 768px) {
+  .find-police-station {
+    padding: 6rem 1rem 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .map-container {
+    height: 400px;
+  }
+
+  .station-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .find-police-station {
+    padding: 5rem 1rem 1rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .map-container {
+    height: 300px;
+  }
+
+  .station-card {
+    padding: 1rem;
+  }
+
+  .station-name {
+    font-size: 1.2rem;
+  }
+} 

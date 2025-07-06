@@ -1,0 +1,148 @@
+.complaint-form {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-controls {
+  margin-bottom: 1.5rem;
+}
+
+.language-select {
+  position: relative;
+  display: inline-block;
+}
+
+.language-select label {
+  margin-right: 0.5rem;
+  color: #2c3e50;
+}
+
+.language-select select {
+  padding: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  background-color: white;
+  color: #2c3e50;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #34495e;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.language-select:hover .tooltip {
+  opacity: 1;
+}
+
+.input-container {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.complaint-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 200px;
+  transition: border-color 0.3s ease;
+}
+
+.complaint-textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.voice-input-button {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.voice-input-button:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.voice-input-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.analyze-button,
+.cancel-button {
+  flex: 1;
+  padding: 1rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.analyze-button {
+  background-color: #3498db;
+  color: white;
+}
+
+.analyze-button:hover {
+  background-color: #2980b9;
+}
+
+.cancel-button {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #c0392b;
+}
+
+@media (max-width: 768px) {
+  .complaint-form {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .language-select {
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .language-select select {
+    width: 100%;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+  }
+} 
