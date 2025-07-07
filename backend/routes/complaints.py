@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson.objectid import ObjectId
 from datetime import datetime, timezone
 import re
+from utils.notifications import send_complaint_confirmation_sms, send_status_update_sms
 
 complaint_routes = Blueprint('complaints', __name__)
 
@@ -11,12 +12,29 @@ def is_valid_phone(phone):
     pattern = r"^(\+91[\-\s]?)?[0]?(91)?[789]\d{9}$"
     return bool(re.match(pattern, phone))
 
+# Helper function to parse the JWT identity string
+def parse_identity(identity_string):
+    parts = identity_string.split(':', 2)
+    if len(parts) == 3:
+        return {
+            "id": parts[0],
+            "role": parts[1],
+            "name": parts[2]
+        }
+    return None
+
 @complaint_routes.route('/api/complaints', methods=['POST'])
 @jwt_required()
 def create_complaint():
-    from app import mongo
+    from app import mongo, twilio_client, TWILIO_PHONE_NUMBER
     
-    current_user = get_jwt_identity()
+    # Fix the identity handling
+    current_user_identity = get_jwt_identity()
+    current_user = parse_identity(current_user_identity)
+    
+    if not current_user:
+        return jsonify({"error": "Invalid user identity"}), 400
+        
     data = request.get_json()
     
     text = data.get('text')
@@ -26,6 +44,13 @@ def create_complaint():
     victim_phone = data.get('victim_phone')
     victim_name = data.get('victim_name')
     victim_details = data.get('victim_details', {})
+    
+    # New: Get analysis result if available
+    analysis_result = data.get('analysisResult')
+    
+    # Get incident details if available
+    incident_details = data.get('incident_details', {})
+    legal_classification = data.get('legal_classification', {})
     
     if not text or not language:
         return jsonify({"error": "Complaint text and language are required"}), 400
@@ -95,6 +120,24 @@ def create_complaint():
                 "role": "police"
             }
         }
+        
+        # Add additional data
+        if incident_details:
+            complaint["incidentDetails"] = incident_details
+            
+        if legal_classification:
+            complaint["legalClassification"] = legal_classification
+        
+        # Add analysis result if available
+        if analysis_result:
+            complaint["analysisResult"] = analysis_result
+            
+            # If the analysis indicates this is a cognizable offense,
+            # we can automatically set suggested sections
+            if analysis_result.get("isCognizable") and analysis_result.get("sections"):
+                complaint["suggestedSections"] = [
+                    section["section"] for section in analysis_result["sections"]
+                ]
     else:
         # Regular complaint created by victim
         complaint = {
@@ -106,9 +149,75 @@ def create_complaint():
             "complainantPhone": current_user.get("phone"),
             "filedAt": datetime.now(timezone.utc).isoformat(),
         }
+        
+        # Add additional data
+        if incident_details:
+            complaint["incidentDetails"] = incident_details
+            
+        if legal_classification:
+            complaint["legalClassification"] = legal_classification
+        
+        # Add analysis result if available
+        if analysis_result:
+            complaint["analysisResult"] = analysis_result
+            
+            # If the analysis indicates this is a cognizable offense,
+            # we can automatically set suggested sections
+            if analysis_result.get("isCognizable") and analysis_result.get("sections"):
+                complaint["suggestedSections"] = [
+                    section["section"] for section in analysis_result["sections"]
+                ]
     
     result = mongo.db.complaints.insert_one(complaint)
-    complaint["id"] = str(result.inserted_id)
+    complaint_id = str(result.inserted_id)
+    complaint["id"] = complaint_id
+    
+    # Remove _id from the response to avoid serialization error
+    if '_id' in complaint:
+        del complaint['_id']
+    
+    # Send SMS notification to victim
+    try:
+        victim_phone = victim_phone if 'victim_phone' in locals() else complaint.get("complainantPhone")
+        
+        if twilio_client and TWILIO_PHONE_NUMBER and victim_phone:
+            is_cognizable = None
+            if "analysisResult" in complaint and complaint.get("analysisResult"):
+                is_cognizable = complaint["analysisResult"].get("isCognizable")
+                
+            notification_result = send_complaint_confirmation_sms(
+                twilio_client, 
+                TWILIO_PHONE_NUMBER,
+                victim_phone,
+                complaint_id,
+                is_cognizable
+            )
+            
+            if notification_result["success"]:
+                print(f"SMS notification sent: {notification_result['sid']}")
+                # Store notification history in database
+                mongo.db.notifications.insert_one({
+                    "complaintId": complaint_id,
+                    "recipientPhone": victim_phone,
+                    "type": "complaint_confirmation",
+                    "message": notification_result["message"],
+                    "status": "sent",
+                    "sentAt": datetime.now(timezone.utc).isoformat(),
+                    "twilioSid": notification_result.get("sid")
+                })
+            else:
+                print(f"Failed to send SMS notification: {notification_result['error']}")
+                # Log the failure
+                mongo.db.notifications.insert_one({
+                    "complaintId": complaint_id,
+                    "recipientPhone": victim_phone,
+                    "type": "complaint_confirmation",
+                    "status": "failed",
+                    "error": notification_result["error"],
+                    "attemptedAt": datetime.now(timezone.utc).isoformat()
+                })
+    except Exception as e:
+        print(f"Error in notification process: {str(e)}")
     
     return jsonify({
         "message": "Complaint filed successfully",
@@ -121,14 +230,15 @@ def get_complaints():
     from app import mongo
     
     current_user_identity = get_jwt_identity()
+    current_user = parse_identity(current_user_identity)
+    
+    if not current_user:
+        return jsonify({"error": "Invalid user identity"}), 400
     
     try:
-        # Parse the identity string
-        user_id, role, name = current_user_identity.split(':', 2)
-        
-        if role == "victim":
+        if current_user["role"] == "victim":
             # Return only complaints filed by this victim
-            complaints = list(mongo.db.complaints.find({"complainantId": user_id}))
+            complaints = list(mongo.db.complaints.find({"complainantId": current_user["id"]}))
         else:
             # For police officers, return all complaints
             complaints = list(mongo.db.complaints.find())
@@ -148,18 +258,19 @@ def get_complaint(complaint_id):
     from app import mongo
     
     current_user_identity = get_jwt_identity()
+    current_user = parse_identity(current_user_identity)
+    
+    if not current_user:
+        return jsonify({"error": "Invalid user identity"}), 400
     
     try:
-        # Parse the identity string
-        user_id, role, name = current_user_identity.split(':', 2)
-        
         complaint = mongo.db.complaints.find_one({"_id": ObjectId(complaint_id)})
         
         if not complaint:
             return jsonify({"error": "Complaint not found"}), 404
         
         # Check if user has access to this complaint
-        if role == "victim" and complaint["complainantId"] != user_id:
+        if current_user["role"] == "victim" and complaint["complainantId"] != current_user["id"]:
             return jsonify({"error": "Unauthorized access"}), 403
         
         complaint["id"] = str(complaint.pop("_id"))
@@ -224,13 +335,18 @@ def analyze_complaint():
 @complaint_routes.route('/api/complaints/<complaint_id>', methods=['PATCH'])
 @jwt_required()
 def update_complaint(complaint_id):
-    from app import mongo
+    from app import mongo, twilio_client, TWILIO_PHONE_NUMBER
     
-    current_user = get_jwt_identity()
-    data = request.get_json()
+    current_user_identity = get_jwt_identity()
+    current_user = parse_identity(current_user_identity)
+    
+    if not current_user:
+        return jsonify({"error": "Invalid user identity"}), 400
     
     if current_user["role"] != "police":
         return jsonify({"error": "Only police officers can update complaints"}), 403
+    
+    data = request.get_json()  # Get the request data
     
     try:
         complaint = mongo.db.complaints.find_one({"_id": ObjectId(complaint_id)})
@@ -257,10 +373,49 @@ def update_complaint(complaint_id):
                 {"_id": ObjectId(complaint_id)}, 
                 {"$set": updates}
             )
+            
+            # Send notification if status was changed
+            if 'status' in updates and twilio_client and TWILIO_PHONE_NUMBER:
+                try:
+                    # Get the complaint with victim contact info
+                    updated_complaint = mongo.db.complaints.find_one({"_id": ObjectId(complaint_id)})
+                    victim_phone = updated_complaint.get("complainantPhone")
+                    
+                    if victim_phone:
+                        # Get additional details for the message
+                        details = None
+                        if updates["status"] == "filed" and "firNumber" in updates:
+                            details = f"FIR Number: {updates['firNumber']}"
+                        
+                        notification_result = send_status_update_sms(
+                            twilio_client,
+                            TWILIO_PHONE_NUMBER,
+                            victim_phone,
+                            complaint_id,
+                            updates["status"],
+                            details
+                        )
+                        
+                        if notification_result["success"]:
+                            print(f"Status update SMS sent: {notification_result['sid']}")
+                            # Store notification history
+                            mongo.db.notifications.insert_one({
+                                "complaintId": complaint_id,
+                                "recipientPhone": victim_phone,
+                                "type": "status_update",
+                                "message": notification_result["message"],
+                                "status": "sent",
+                                "sentAt": datetime.now(timezone.utc).isoformat(),
+                                "twilioSid": notification_result.get("sid")
+                            })
+                        else:
+                            print(f"Failed to send status update SMS: {notification_result['error']}")
+                except Exception as e:
+                    print(f"Error sending status update notification: {str(e)}")
         
+        # Get updated complaint to return
         updated_complaint = mongo.db.complaints.find_one({"_id": ObjectId(complaint_id)})
         updated_complaint["id"] = str(updated_complaint.pop("_id"))
-        
         return jsonify(updated_complaint), 200
     
     except Exception as e:

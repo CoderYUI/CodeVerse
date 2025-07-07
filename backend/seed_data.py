@@ -161,6 +161,7 @@ def seed_database():
     db.pre_registered_victims.drop()
     db.complaints.drop()
     db.victims.drop()
+    db.notifications.drop()  # Add notifications collection
     
     # Insert data
     db.ipc_sections.insert_many(ipc_sections)

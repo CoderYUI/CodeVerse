@@ -9,13 +9,23 @@ from datetime import timedelta, timezone, datetime
 import random
 import string
 from twilio.rest import Client
+from utils.json_utils import configure_json_encoding
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+
+# Configure JSON encoding for MongoDB objects
+configure_json_encoding(app)
+
+# Configure CORS properly with specific origin and credentials
+CORS(app, 
+     resources={r"/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"], "supports_credentials": True}}, 
+     allow_headers=["Content-Type", "Authorization"],
+     expose_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
 
 # Configure MongoDB
 app.config["MONGO_URI"] = os.getenv("MONGO_URI", "mongodb://localhost:27017/saarthi")
@@ -84,9 +94,31 @@ def health_check():
 @app.route('/api/auth/verify-token', methods=['GET'])
 @jwt_required()
 def verify_token():
-    current_user = get_jwt_identity()
-    print(f"Token verified for user: {current_user}")
-    return jsonify({"valid": True, "user": current_user}), 200
+    current_user_identity = get_jwt_identity()
+    
+    # Parse the identity for better debugging
+    parts = current_user_identity.split(':', 2)
+    if len(parts) == 3:
+        user = {
+            "id": parts[0],
+            "role": parts[1],
+            "name": parts[2]
+        }
+        print(f"Token verified for user: {user['name']} (role: {user['role']})")
+        return jsonify({"valid": True, "user": user}), 200
+    else:
+        print(f"Invalid identity format: {current_user_identity}")
+        return jsonify({"valid": False, "error": "Invalid identity format"}), 400
+
+# Make Twilio client available to routes
+@app.context_processor
+def inject_twilio():
+    return dict(twilio_client=twilio_client, TWILIO_PHONE_NUMBER=TWILIO_PHONE_NUMBER)
+
+# Ensure utils directory is recognized as a package
+if not os.path.exists('utils/__init__.py'):
+    with open('utils/__init__.py', 'w') as f:
+        f.write('# Utilities package for SAARTHI\n')
 
 # Import routes after app initialization to avoid circular imports
 from routes import auth, complaints, police

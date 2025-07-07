@@ -1,13 +1,14 @@
 import axios from 'axios';
 
+// Create API instance with base URL from environment
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// Create axios instance with base URL
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true
 });
 
 // Function to dispatch auth change event
@@ -28,17 +29,21 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Add response interceptor to handle authentication errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.log('API Error:', error.response?.status, error.response?.data);
+    console.error('API Error:', error.response?.data || error.message);
     
     // Handle authentication errors (401, 422)
     if (error.response && (error.response.status === 401 || error.response.status === 422)) {
+      console.log('Authentication error, redirecting to login');
       // Only clear storage and redirect for token-related errors, not login failures
       const isLoginEndpoint = error.config && (
         error.config.url.includes('/auth/police/login') || 
@@ -57,12 +62,22 @@ api.interceptors.response.use(
           window.location.href = '/login';
         }
       }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('API No Response Error:', error.request);
+      
+      // Check if CORS issue
+      if (error.message && error.message.includes('Network Error')) {
+        console.error('Possible CORS issue or server is down');
+      }
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('API Error:', error.message);
     }
+    
     return Promise.reject(error);
   }
 );
-
-export default api;
 
 // Authentication API calls
 export const authAPI = {
@@ -147,3 +162,5 @@ export const policeAPI = {
   getIPCSections: () => api.get('/api/police/ipc-sections'),
   getLegalRights: () => api.get('/api/police/legal-rights')
 };
+
+export default api;
