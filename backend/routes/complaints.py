@@ -130,6 +130,7 @@ def create_complaint():
         
         # Add analysis result if available
         if analysis_result:
+            # Save the complete analysis result, not just parts of it
             complaint["analysisResult"] = analysis_result
             
             # If the analysis indicates this is a cognizable offense,
@@ -138,6 +139,14 @@ def create_complaint():
                 complaint["suggestedSections"] = [
                     section["section"] for section in analysis_result["sections"]
                 ]
+                
+            # Also store summary and explanation for easier reference
+            if analysis_result.get("summary"):
+                complaint["summary"] = analysis_result.get("summary")
+            
+            if analysis_result.get("explanation"):
+                complaint["explanation"] = analysis_result.get("explanation")
+    
     else:
         # Regular complaint created by victim
         complaint = {
@@ -222,7 +231,7 @@ def create_complaint():
     return jsonify({
         "message": "Complaint filed successfully",
         "complaint": complaint
-    }), 201
+    }),201
 
 @complaint_routes.route('/api/complaints', methods=['GET'])
 @jwt_required()
@@ -238,14 +247,27 @@ def get_complaints():
     try:
         if current_user["role"] == "victim":
             # Return only complaints filed by this victim
-            complaints = list(mongo.db.complaints.find({"complainantId": current_user["id"]}))
+            # Don't include full text for privacy in the listing
+            complaints = list(mongo.db.complaints.find(
+                {"complainantId": current_user["id"]},
+                {"text": 1, "status": 1, "filedAt": 1, "firNumber": 1, 
+                 "complainantName": 1, "currentStage": 1, "_id": 1}
+            ))
         else:
-            # For police officers, return all complaints
+            # For police officers, return all complaints with full details
             complaints = list(mongo.db.complaints.find())
         
         # Convert ObjectId to string
         for complaint in complaints:
             complaint["id"] = str(complaint.pop("_id"))
+            
+            # For victims, only return a truncated version of the text for privacy
+            if current_user["role"] == "victim" and "text" in complaint:
+                # Store the length of the original text
+                complaint["textLength"] = len(complaint["text"])
+                # Truncate text for the listing to preserve privacy
+                if len(complaint["text"]) > 100:
+                    complaint["text"] = complaint["text"][:100] + "..."
         
         return jsonify(complaints), 200
     except Exception as e:
@@ -264,6 +286,7 @@ def get_complaint(complaint_id):
         return jsonify({"error": "Invalid user identity"}), 400
     
     try:
+        # Always fetch the complete complaint with full text
         complaint = mongo.db.complaints.find_one({"_id": ObjectId(complaint_id)})
         
         if not complaint:
@@ -273,7 +296,27 @@ def get_complaint(complaint_id):
         if current_user["role"] == "victim" and complaint["complainantId"] != current_user["id"]:
             return jsonify({"error": "Unauthorized access"}), 403
         
+        # Add ID
         complaint["id"] = str(complaint.pop("_id"))
+        
+        # If the user is a police officer, fetch additional victim information
+        if current_user["role"] == "police" and "complainantId" in complaint:
+            victim_id = complaint["complainantId"]
+            
+            # Try to find the victim in the victims collection
+            victim = mongo.db.victims.find_one({"_id": ObjectId(victim_id)})
+            
+            # If not found, try in pre-registered victims
+            if not victim and "complainantPhone" in complaint:
+                victim = mongo.db.pre_registered_victims.find_one({"phone": complaint["complainantPhone"]})
+            
+            # If we found victim info, add address and ID proof to the complaint
+            if victim:
+                complaint["complainantAddress"] = victim.get("address", "Not available")
+                complaint["complainantIdProof"] = victim.get("id_proof", "Not available")
+        
+        # Ensure we're always sending the full text in GET single complaint endpoint
+        # No text truncation here
         
         return jsonify(complaint), 200
     except Exception as e:
@@ -288,9 +331,6 @@ def analyze_complaint():
     
     if not text or not language:
         return jsonify({"error": "Text and language are required"}), 400
-    
-    # Here you would typically call your AI model or service
-    # For now, we'll return mock data based on the frontend types
     
     # Mock analysis result
     analysis_result = {
@@ -418,5 +458,105 @@ def update_complaint(complaint_id):
         updated_complaint["id"] = str(updated_complaint.pop("_id"))
         return jsonify(updated_complaint), 200
     
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@complaint_routes.route('/api/complaints/<complaint_id>/notes', methods=['GET'])
+@jwt_required()
+def get_complaint_notes(complaint_id):
+    from app import mongo
+    
+    current_user_identity = get_jwt_identity()
+    current_user = parse_identity(current_user_identity)
+    
+    if not current_user:
+        return jsonify({"error": "Invalid user identity"}), 400
+    
+    try:
+        # Verify complaint exists
+        complaint = mongo.db.complaints.find_one({"_id": ObjectId(complaint_id)})
+        if not complaint:
+            return jsonify({"error": "Complaint not found"}), 404
+        
+        # Check user has access to this complaint
+        if current_user["role"] == "victim" and complaint["complainantId"] != current_user["id"]:
+            return jsonify({"error": "Unauthorized access"}), 403
+        
+        # Get notes with visibility filter
+        query = {"complaint_id": complaint_id}
+        
+        # Victims can only see public notes
+        if current_user["role"] == "victim":
+            query["visibility"] = "public"
+        
+        notes = list(mongo.db.case_notes.find(query).sort("created_at", -1))
+        
+        # Convert ObjectId to string
+        for note in notes:
+            if "_id" in note:
+                note["id"] = str(note.pop("_id"))
+        
+        return jsonify(notes), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@complaint_routes.route('/api/complaints/<complaint_id>/notes', methods=['POST'])
+@jwt_required()
+def add_complaint_note(complaint_id):
+    from app import mongo
+    
+    current_user_identity = get_jwt_identity()
+    current_user = parse_identity(current_user_identity)
+    
+    if not current_user:
+        return jsonify({"error": "Invalid user identity"}), 400
+    
+    # Only police can add notes
+    if current_user["role"] != "police":
+        return jsonify({"error": "Only police officers can add case notes"}), 403
+    
+    data = request.get_json()
+    content = data.get('content')
+    stage = data.get('stage')
+    visibility = data.get('visibility', 'internal')
+    
+    if not content:
+        return jsonify({"error": "Note content is required"}), 400
+    
+    # Validate visibility
+    if visibility not in ["internal", "public"]:
+        return jsonify({"error": "Visibility must be either 'internal' or 'public'"}), 400
+    
+    try:
+        # Verify complaint exists
+        complaint = mongo.db.complaints.find_one({"_id": ObjectId(complaint_id)})
+        if not complaint:
+            return jsonify({"error": "Complaint not found"}), 404
+        
+        # Create note
+        note = {
+            "complaint_id": complaint_id,
+            "author_id": current_user["id"],
+            "author_name": current_user["name"],
+            "content": content,
+            "stage": stage,
+            "visibility": visibility,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        result = mongo.db.case_notes.insert_one(note)
+        note_id = str(result.inserted_id)
+        
+        # Update complaint with the latest stage if provided
+        if stage:
+            mongo.db.complaints.update_one(
+                {"_id": ObjectId(complaint_id)},
+                {"$set": {"currentStage": stage, "updatedAt": datetime.now(timezone.utc).isoformat()}}
+            )
+            
+        # Return success response with the created note
+        note["id"] = note_id
+        return jsonify(note), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400

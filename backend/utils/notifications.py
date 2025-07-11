@@ -21,8 +21,8 @@ def send_complaint_confirmation_sms(twilio_client, from_number, to_number, compl
         return {"success": False, "error": "Missing Twilio configuration or phone numbers"}
     
     try:
-        # Format complaint ID to be more readable
-        formatted_id = f"SAARTHI-{complaint_id[-6:]}".upper()
+        # Format complaint ID to be more readable and shorter (only last 6 characters)
+        formatted_id = f"SAR-{complaint_id[-6:]}".upper()
         current_time = datetime.now().strftime("%d/%m/%Y %H:%M")
         
         message = f"Your complaint has been registered successfully at {current_time}.\n\nComplaint ID: {formatted_id}\n"
@@ -75,8 +75,8 @@ def send_status_update_sms(twilio_client, from_number, to_number, complaint_id, 
         return {"success": False, "error": "Missing Twilio configuration or phone numbers"}
     
     try:
-        # Format complaint ID to be more readable
-        formatted_id = f"SAARTHI-{complaint_id[-6:]}".upper()
+        # Format complaint ID to be more readable and shorter
+        formatted_id = f"SAR-{complaint_id[-6:]}".upper()
         
         # Create appropriate message based on status
         status_messages = {

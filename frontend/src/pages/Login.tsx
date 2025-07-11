@@ -154,13 +154,7 @@ const PreRegisteredComplaints = styled.div`
   margin-top: 10px;
 `;
 
-const ComplaintItem = styled.div`
-  background-color: #f5f5f5;
-  padding: 8px;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  font-size: 0.85rem;
-`;
+
 
 // Add these new styled components for the trial account message
 const TrialAccountMessage = styled.div`
@@ -431,23 +425,11 @@ const Login: React.FC = () => {
                         </PreRegisteredData>
                       )}
                       
+                      {/* Remove displaying sensitive complaint content for privacy */}
                       {preRegisteredData.complaints && preRegisteredData.complaints.length > 0 && (
                         <PreRegisteredComplaints>
-                          <strong>Your Complaints:</strong>
-                          {preRegisteredData.complaints.map((complaint: any, index: number) => (
-                            <ComplaintItem key={index}>
-                              {complaint.text.substring(0, 50)}...
-                              {complaint.status && (
-                                <span style={{ 
-                                  color: complaint.status === 'pending' ? 'orange' : 
-                                         complaint.status === 'filed' ? 'green' : 'blue',
-                                  marginLeft: '5px'
-                                }}>
-                                  ({complaint.status})
-                                </span>
-                              )}
-                            </ComplaintItem>
-                          ))}
+                          <strong>You have {preRegisteredData.complaints.length} previous complaint(s)</strong>
+                          {/* Removed the detailed complaint text for privacy concerns */}
                         </PreRegisteredComplaints>
                       )}
                     </PreRegisteredInfo>

@@ -157,7 +157,7 @@ const LegalGuide: React.FC = () => {
           <SectionTitle>Basic Rights of Citizens</SectionTitle>
           <Accordion>
             {mockLegalRights.map((right, index) => (
-              <AccordionItem key={index}>
+              <AccordionItem key={index} isOpen={openRights.includes(index)}>
                 <AccordionHeader
                   isOpen={openRights.includes(index)}
                   onClick={() => toggleRight(index)}
@@ -180,7 +180,7 @@ const LegalGuide: React.FC = () => {
           <SectionTitle>Common IPC Sections</SectionTitle>
           <Accordion>
             {mockIPCSections.map((section, index) => (
-              <AccordionItem key={index}>
+              <AccordionItem key={index} isOpen={openSections.includes(index)}>
                 <AccordionHeader
                   isOpen={openSections.includes(index)}
                   onClick={() => toggleSection(index)}

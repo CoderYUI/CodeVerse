@@ -1,4 +1,6 @@
 import axios from 'axios';
+// Define CaseStage enum or type
+export type CaseStage = 'registration' | 'investigation' | 'chargesheet' | 'trial' | 'closed';
 
 // Create API instance with base URL from environment
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -144,16 +146,19 @@ export const authAPI = {
 
 // Complaints API calls
 export const complaintsAPI = {
-  getAll: () => {
-    const token = localStorage.getItem('token');
-    console.log('Fetching complaints with token');
-    return api.get('/api/complaints');
-  },
+  getAll: () => api.get('/api/complaints'),
   get: (id: string) => api.get(`/api/complaints/${id}`),
   create: (data: any) => api.post('/api/complaints', data),
   update: (id: string, data: any) => api.patch(`/api/complaints/${id}`, data),
   analyze: (text: string, language: string) => 
-    api.post('/api/complaints/analyze', { text, language })
+    api.post('/api/complaints/analyze', { text, language }),
+  getNotes: (complaintId: string) => 
+    api.get(`/api/complaints/${complaintId}/notes`),
+  addNote: (complaintId: string, data: {
+    content: string;
+    stage?: CaseStage;
+    visibility: 'internal' | 'public';
+  }) => api.post(`/api/complaints/${complaintId}/notes`, data)
 };
 
 // Police API calls

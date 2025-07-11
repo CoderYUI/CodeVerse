@@ -265,7 +265,7 @@ def verify_otp_route():
             # Generate access token with string identity
             access_token = create_access_token(identity=identity_string)
             
-            # Prepare user data for response
+            # Prepare user data for response with limited sensitive info
             user_data = {
                 "id": str(user["_id"]),
                 "name": user["name"],
@@ -275,19 +275,25 @@ def verify_otp_route():
             }
             
             # Add optional fields if they exist
-            for field in ["address", "id_proof", "verified"]:
+            for field in ["verified"]:
                 if field in user:
                     user_data[field] = user[field]
             
             # Get associated complaints
             complaints = list(mongo.db.complaints.find(
-                {"$or": [{"complainantId": str(user["_id"])}, {"complainantPhone": phone}]}
+                {"$or": [{"complainantId": str(user["_id"])}, {"complainantPhone": phone}]},
+                # Only return necessary fields for listing
+                {"_id": 1, "status": 1, "filedAt": 1}
             ))
             
-            # Convert ObjectId to string in complaints
+            # Convert ObjectId to string in complaints and truncate text
             for complaint in complaints:
                 if "_id" in complaint:
                     complaint["id"] = str(complaint.pop("_id"))
+                
+                # Include a truncated version of the text for privacy
+                if "text" in complaint and len(complaint["text"]) > 50:
+                    complaint["text"] = complaint["text"][:50] + "..."
             
             user_data["complaints"] = complaints
             

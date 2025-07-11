@@ -6,6 +6,7 @@ import { mockComplaints } from '../data/mockData';
 import '../styles/Dashboard.css';
 import { complaintsAPI, authAPI } from '../utils/api';
 import { analyzeComplaint, fallbackAnalysis, transcribeSpeech } from '../utils/geminiService';
+import ComplaintDetailsModal from '../components/ComplaintDetailsModal';
 
 const DashboardContainer = styled.div`
   min-height: 100vh;
@@ -502,6 +503,10 @@ const PoliceDashboard: React.FC = () => {
     isListening: () => boolean;
   } | null>(null);
 
+  // New state and handlers for complaint details modal
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  
   useEffect(() => {
     // Get user from localStorage
     const storedUser = localStorage.getItem('user');
@@ -781,9 +786,28 @@ const PoliceDashboard: React.FC = () => {
   };
   
   const handleComplaintClick = (complaint: Complaint) => {
-    navigate(`/complaints/${complaint.id}`);
+    setSelectedComplaint(complaint);
+    setShowDetailsModal(true);
   };
-
+  
+  const handleCloseDetailsModal = () => {
+    setShowDetailsModal(false);
+    // Refresh the complaints list after modal is closed
+    fetchComplaints();
+  };
+  
+  const handleUpdateStatus = async (complaintId: string, data: any) => {
+    try {
+      await complaintsAPI.update(complaintId, data);
+      // Refresh complaints after update
+      fetchComplaints();
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error updating complaint status:', error);
+      return Promise.reject(error);
+    }
+  };
+  
   if (!user) {
     return null;
   }
@@ -1205,6 +1229,17 @@ const PoliceDashboard: React.FC = () => {
 
       {/* Render our enhanced complaint modal */}
       {renderComplaintModal()}
+
+      {/* Add the modal */}
+      {selectedComplaint && (
+        <ComplaintDetailsModal
+          complaint={selectedComplaint}
+          isOpen={showDetailsModal}
+          onClose={handleCloseDetailsModal}
+          userRole="police"
+          onUpdateStatus={handleUpdateStatus}
+        />
+      )}
     </DashboardContainer>
   );
 };

@@ -5,6 +5,7 @@ import type { Complaint } from '../types';
 import { mockComplaints } from '../data/mockData';
 import '../styles/Dashboard.css';
 import { complaintsAPI } from '../utils/api';
+import ComplaintDetailsModal from '../components/ComplaintDetailsModal';
 
 const DashboardContainer = styled.div`
   min-height: 100vh;
@@ -146,6 +147,14 @@ const ComplaintDetails = styled.div`
   line-height: 1.4;
 `;
 
+const TruncatedText = styled.p`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+`;
+
 const ActionButton = styled.button`
   padding: 0.8rem 1.5rem;
   background-color: #1a237e;
@@ -166,6 +175,11 @@ const VictimDashboard: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
+  // Add state for active tab
+  const [activeTab, setActiveTab] = useState<'home' | 'file' | 'track'>('home');
 
   useEffect(() => {
     // Get user from localStorage
@@ -199,8 +213,23 @@ const VictimDashboard: React.FC = () => {
   };
 
   const handleComplaintClick = (complaint: Complaint) => {
-    // Navigate to complaint details
-    navigate(`/fir-report/${complaint.id}`);
+    // Fetch the complete complaint data with full text before showing the modal
+    complaintsAPI.get(complaint.id)
+      .then(response => {
+        setSelectedComplaint(response.data);
+        setShowModal(true);
+      })
+      .catch(error => {
+        console.error('Error fetching complete complaint:', error);
+        // Fall back to the truncated version if we can't get the full version
+        setSelectedComplaint(complaint);
+        setShowModal(true);
+      });
+  };
+  
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedComplaint(null);
   };
 
   if (!user) {
@@ -258,7 +287,11 @@ const VictimDashboard: React.FC = () => {
                     </ComplaintStatus>
                   </ComplaintHeader>
                   <ComplaintDetails>
-                    <p>{complaint.text.substring(0, 150)}...</p>
+                    {/* Use TruncatedText to limit display in the list */}
+                    <TruncatedText>
+                      {complaint.text.substring(0, 100)}
+                      {complaint.text.length > 100 ? '...' : ''}
+                    </TruncatedText>
                     {complaint.firNumber && (
                       <p>FIR Number: {complaint.firNumber}</p>
                     )}
@@ -278,6 +311,16 @@ const VictimDashboard: React.FC = () => {
           </ActionButton>
         </div>
       </Content>
+
+      {/* The modal will show the full text without truncation */}
+      {selectedComplaint && (
+        <ComplaintDetailsModal
+          complaint={selectedComplaint}
+          isOpen={showModal}
+          onClose={handleCloseModal}
+          userRole="victim"
+        />
+      )}
     </DashboardContainer>
   );
 };

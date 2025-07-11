@@ -2,19 +2,41 @@ export type UserRole = 'police' | 'victim';
 
 export type Language = 'en' | 'hi' | 'mr' | 'gu' | 'bn' | 'ta' | 'te' | 'ml' | 'kn';
 
-export type ComplaintStatus = 'pending' | 'analyzed' | 'filed' | 'rejected';
+export type CaseStage = 
+  'preliminary_inquiry' | 
+  'evidence_collection' | 
+  'witness_interview' | 
+  'suspect_identification' | 
+  'arrest' | 
+  'charge_sheet' | 
+  'court_filing' | 
+  'trial' | 
+  'verdict' | 
+  'closed';
+
+export type ComplaintStatus = 'pending' | 'analyzed' | 'filed' | 'rejected' | 'closed';
 
 export interface Complaint {
   id: string;
   text: string;
-  language: Language;
+  language: string;
   status: ComplaintStatus;
-  complainantName: string;
   complainantId: string;
+  complainantName: string;
+  complainantPhone?: string;
+  complainantAddress?: string;  // Added property
+  complainantIdProof?: string;  // Added property
   filedAt: string;
+  updatedAt?: string;
   firNumber?: string;
   appliedSections?: string[];
-  analysisResult?: AnalysisResult;
+  filedBy?: {
+    id: string;
+    name: string;
+    role: string;
+  };
+  analysisResult?: any;
+  currentStage?: CaseStage; // Added this field
 }
 
 export interface AnalysisResult {
@@ -35,4 +57,15 @@ export interface Judgment {
   summary: string;
   fullText: string;
   relevantSections: string[];
-} 
+}
+
+export interface CaseNote {
+  id: string;
+  complaint_id: string;
+  author_id: string;
+  author_name: string;
+  content: string;
+  stage?: CaseStage;
+  visibility: 'internal' | 'public';
+  created_at: string;
+}

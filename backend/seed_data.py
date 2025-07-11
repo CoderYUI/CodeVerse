@@ -152,6 +152,28 @@ sample_complaints = [
     }
 ]
 
+# Sample Case Notes
+sample_case_notes = [
+    {
+        "complaint_id": "", # Will be updated with real ID
+        "author_id": "", # Will be updated with real ID
+        "author_name": "Inspector Rajesh Kumar",
+        "content": "Initial assessment: This appears to be a case of workplace harassment. Will proceed with preliminary inquiry.",
+        "stage": "preliminary_inquiry",
+        "visibility": "public",
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    },
+    {
+        "complaint_id": "", # Will be updated with real ID
+        "author_id": "", # Will be updated with real ID
+        "author_name": "Inspector Rajesh Kumar",
+        "content": "Internal note: Need to collect CCTV footage from the workplace. Contact HR department.",
+        "stage": "evidence_collection",
+        "visibility": "internal",
+        "created_at": (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2)).isoformat()
+    }
+]
+
 # Seed the database
 def seed_database():
     # Drop existing collections
@@ -161,7 +183,8 @@ def seed_database():
     db.pre_registered_victims.drop()
     db.complaints.drop()
     db.victims.drop()
-    db.notifications.drop()  # Add notifications collection
+    db.notifications.drop()
+    db.case_notes.drop()  # Add case_notes collection
     
     # Insert data
     db.ipc_sections.insert_many(ipc_sections)
@@ -182,7 +205,15 @@ def seed_database():
         complaint["filedBy"]["id"] = officer_id
     
     # Insert complaints
-    db.complaints.insert_many(sample_complaints)
+    complaints_result = db.complaints.insert_many(sample_complaints)
+    
+    # Update case notes with real complaint and officer IDs
+    for i, note in enumerate(sample_case_notes):
+        note["complaint_id"] = str(complaints_result.inserted_ids[0])  # Assign to first complaint
+        note["author_id"] = officer_id
+    
+    # Insert case notes
+    db.case_notes.insert_many(sample_case_notes)
     
     # Print confirmation message with login credentials
     print("\nDatabase seeded successfully!")

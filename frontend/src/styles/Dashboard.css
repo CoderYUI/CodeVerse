@@ -13,12 +13,23 @@
 
 /* Welcome Section */
 .welcome-section {
-  background: white;
-  border-radius: 10px;
-  padding: 2rem;
+  background-color: #f5f9ff;
+  border-radius: 8px;
+  padding: 1.5rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #3f51b5;
   animation: fadeIn 0.5s ease-out;
+}
+
+.welcome-section h2 {
+  margin-top: 0;
+  color: #3f51b5;
+  font-size: 1.5rem;
+}
+
+.welcome-section p {
+  margin-bottom: 0;
+  color: #5c5c5c;
 }
 
 .welcome-title {
@@ -73,6 +84,15 @@
   padding: 2rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   animation: fadeIn 0.5s ease-out;
+  margin-top: 2rem;
+}
+
+.complaints-section h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
 }
 
 .section-title {
@@ -81,9 +101,36 @@
   margin-bottom: 1.5rem;
 }
 
-.complaint-list {
-  display: grid;
-  gap: 1rem;
+.complaints-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.complaint-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.complaint-item:hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.complaint-summary {
+  flex: 1;
+  font-size: 0.95rem;
+  color: #333;
+  /* Make sure long text doesn't break layout */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .complaint-card {
@@ -223,4 +270,4 @@
   .complaint-status {
     align-self: flex-start;
   }
-} 
+}

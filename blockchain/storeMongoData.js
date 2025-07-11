@@ -1,53 +1,56 @@
-const Web3 = require("web3");
-const mongoose = require("mongoose");
-require("dotenv").config();
-const contractJson = require("../build/contracts/MongoDataStorage.json");
+require('dotenv').config();
+const mongoose = require('mongoose');
+const { Web3 } = require('web3');
+const fs = require('fs');
+const path = require('path');
 
-const CONTRACT_ABI = contractJson.abi;
-const CONTRACT_ADDRESS = "0xf827F5C52269EdbdED3CedA5446c26F712E272C5"; // ✅ Deployed address
-
-const web3 = new Web3("http://127.0.0.1:7545");
-const contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-
-mongoose.connect("mongodb://localhost:27017/codeverse", {
+// ✅ MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("✅ MongoDB connected"))
+.catch((err) => console.error("❌ MongoDB connection error:", err));
+
+// ✅ Web3 and Smart Contract Setup
+const web3 = new Web3("http://127.0.0.1:7545"); // Ganache
+const contractPath = path.resolve(__dirname, '..', 'build', 'contracts', 'MongoDataStorage.json');
+const contractJSON = JSON.parse(fs.readFileSync(contractPath));
+const contractABI = contractJSON.abi;
+const contractAddress = process.env.CONTRACT_ADDRESS;
+const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+// ✅ Mongo Schema
+const dataSchema = new mongoose.Schema({
+  batchNumber: String,
+  hash: String,
+  timestamp: Date
 });
 
-const db = mongoose.connection;
+const BlockchainData = mongoose.model('BlockchainData', dataSchema);
 
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-
-db.once("open", async () => {
-  console.log("✅ Connected to MongoDB");
-
-  const Record = mongoose.model(
-    "your_collection_name", // 🔁 Replace with actual collection name
-    new mongoose.Schema({}, { strict: false })
-  );
-
+// ✅ Transfer All Hashes from MongoDB to Blockchain
+async function syncMongoToBlockchain() {
   try {
-    const data = await Record.find({});
+    const dataList = await BlockchainData.find();
     const accounts = await web3.eth.getAccounts();
 
-    for (const record of data) {
-      const id = record._id.toString();
-      const jsonData = JSON.stringify(record);
+    console.log(`🔍 Found ${dataList.length} records to sync.`);
 
-      try {
-        await contract.methods
-          .storeData(id, jsonData)
-          .send({ from: accounts[0] });
-
-        console.log(`✅ Stored on-chain: ${id}`);
-      } catch (err) {
-        console.error(`❌ Error storing ${id}: ${err.message}`);
-      }
+    for (const data of dataList) {
+      console.log(`⏳ Sending hash: ${data.hash}`);
+      const tx = await contract.methods.storeHash(data.hash).send({
+        from: accounts[0],
+        gas: 300000,
+      });
+      console.log(`✅ Stored on Blockchain: ${tx.transactionHash}`);
     }
 
-    process.exit(0);
   } catch (err) {
-    console.error("❌ MongoDB error:", err);
-    process.exit(1);
+    console.error("❌ Error during sync:", err);
+  } finally {
+    mongoose.connection.close();
   }
-});
+}
+
+syncMongoToBlockchain();

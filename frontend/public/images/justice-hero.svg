@@ -1,0 +1,38 @@
+<svg width="500" height="400" viewBox="0 0 500 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Justice scale -->
+  <path d="M250 60 L250 320" stroke="#FFFFFF" stroke-width="4"/>
+  <circle cx="250" cy="80" r="20" fill="#FFFFFF"/>
+  
+  <!-- Left scale -->
+  <path d="M170 140 L250 80" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="170" cy="140" r="30" fill="#FFFFFF" fill-opacity="0.2" stroke="#FFFFFF" stroke-width="2"/>
+  
+  <!-- Right scale -->
+  <path d="M330 140 L250 80" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="330" cy="140" r="30" fill="#FFFFFF" fill-opacity="0.2" stroke="#FFFFFF" stroke-width="2"/>
+  
+  <!-- Base -->
+  <rect x="200" y="320" width="100" height="20" rx="5" fill="#FFFFFF"/>
+  <rect x="210" y="340" width="80" height="10" rx="3" fill="#FFFFFF" fill-opacity="0.7"/>
+  
+  <!-- Shield emblem -->
+  <path d="M250 120 L280 135 L280 180 L250 200 L220 180 L220 135 Z" fill="#FF5722" fill-opacity="0.8" stroke="#FFFFFF" stroke-width="2"/>
+  <path d="M250 140 L260 145 L260 170 L250 180 L240 170 L240 145 Z" fill="#FFFFFF"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="170" cy="140" r="5" fill="#FF5722"/>
+  <circle cx="330" cy="140" r="5" fill="#FF5722"/>
+  
+  <!-- Stars -->
+  <path d="M120 80 L125 90 L135 90 L127 98 L130 110 L120 102 L110 110 L113 98 L105 90 L115 90 Z" fill="#FFFFFF" fill-opacity="0.5"/>
+  <path d="M380 80 L385 90 L395 90 L387 98 L390 110 L380 102 L370 110 L373 98 L365 90 L375 90 Z" fill="#FFFFFF" fill-opacity="0.5"/>
+  <path d="M180 40 L182 45 L188 45 L183 50 L185 55 L180 52 L175 55 L177 50 L172 45 L178 45 Z" fill="#FFFFFF" fill-opacity="0.7"/>
+  <path d="M320 40 L322 45 L328 45 L323 50 L325 55 L320 52 L315 55 L317 50 L312 45 L318 45 Z" fill="#FFFFFF" fill-opacity="0.7"/>
+  
+  <!-- Text lines representing the law/document -->
+  <rect x="150" y="240" width="200" height="3" rx="1" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="150" y="250" width="180" height="3" rx="1" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="150" y="260" width="160" height="3" rx="1" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="150" y="270" width="190" height="3" rx="1" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="150" y="280" width="150" height="3" rx="1" fill="#FFFFFF" fill-opacity="0.7"/>
+</svg>
