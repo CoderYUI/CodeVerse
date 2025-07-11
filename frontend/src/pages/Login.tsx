@@ -350,8 +350,9 @@ const Login: React.FC = () => {
   return (
     <LoginContainer>
       <LeftPanel>
-        <img src="/logo.png" alt="NyayaCop Logo" style={{ width: '200px', marginBottom: '2rem' }} />
+        <img src="/public/assets/lady-justice.svg" alt="NyayaCop Logo" style={{ width: '250px', marginBottom: '2rem' }} />
         <h1>AI Legal Copilot for FIR Filing</h1>
+        <br></br>
         <p>Transform your legal experience with AI-powered assistance</p>
       </LeftPanel>
 
