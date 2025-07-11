@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "cli-table": "^0.3.11",
     "dotenv": "^17.2.0",
     "mongoose": "^8.16.1",
     "web3": "^4.16.0"

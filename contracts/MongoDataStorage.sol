@@ -32,4 +32,9 @@ contract MongoDataStorage {
     function checkHashExists(string memory _hash) public view returns (bool) {
         return isStored[_hash];
     }
+    
+    // ✅ Verify a hash exists (alias for checkHashExists for compatibility)
+    function verifyHash(string memory _hash) public view returns (bool) {
+        return isStored[_hash];
+    }
 }
