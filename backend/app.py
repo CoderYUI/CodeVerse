@@ -22,7 +22,7 @@ configure_json_encoding(app)
 
 # Configure CORS properly with specific origin and credentials
 # In production, we need to allow the frontend domain
-frontend_urls = os.getenv('FRONTEND_URLS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+frontend_urls = os.getenv('FRONTEND_URLS', 'http://localhost:5173,http://127.0.0.1:5173,https://code-verse-snowy.vercel.app/').split(',')
 CORS(app, 
      resources={r"/*": {"origins": frontend_urls, "supports_credentials": True}}, 
      allow_headers=["Content-Type", "Authorization"],
