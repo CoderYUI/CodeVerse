@@ -137,7 +137,7 @@ const Signup: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
       // Redirect to dashboard
-      navigate('/signup-success', { replace: true });
+      navigate('/dashboard/police', { replace: true });
       
       // Force a page reload after navigation
       setTimeout(() => {
