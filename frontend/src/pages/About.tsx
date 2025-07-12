@@ -185,28 +185,6 @@ const About: React.FC = () => {
             </FeatureCard>
           </FeatureGrid>
         </Section>
-
-        <Section>
-          <Subtitle>Our Impact</Subtitle>
-          <ImpactGrid>
-            <ImpactCard>
-              <ImpactNumber>90%</ImpactNumber>
-              <ImpactLabel>Reduction in FIR Writing Errors</ImpactLabel>
-            </ImpactCard>
-            <ImpactCard>
-              <ImpactNumber>60%</ImpactNumber>
-              <ImpactLabel>Decrease in Police Response Time</ImpactLabel>
-            </ImpactCard>
-            <ImpactCard>
-              <ImpactNumber>85%</ImpactNumber>
-              <ImpactLabel>Improved Citizen Satisfaction</ImpactLabel>
-            </ImpactCard>
-            <ImpactCard>
-              <ImpactNumber>75%</ImpactNumber>
-              <ImpactLabel>More Efficient Case Processing</ImpactLabel>
-            </ImpactCard>
-          </ImpactGrid>
-        </Section>
       </Content>
     </AboutContainer>
   );
