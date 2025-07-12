@@ -9,6 +9,7 @@ import LegalGuide from './pages/LegalGuide'
 import PoliceDashboard from './pages/PoliceDashboard'
 import VictimDashboard from './pages/VictimDashboard'
 import FindPoliceStation from './pages/FindPoliceStation'
+import NotFound from './pages/NotFound'
 import './App.css'
 
 function App() {
@@ -122,7 +123,7 @@ function App() {
           />
 
           {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>
