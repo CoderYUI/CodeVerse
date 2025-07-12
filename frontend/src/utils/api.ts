@@ -156,18 +156,7 @@ export const complaintsAPI = {
     content: string;
     stage?: CaseStage;
     visibility: 'internal' | 'public';
-  }) => api.post(`/api/complaints/${complaintId}/notes`, data),
-  
-  // Add this new method for filing complaints
-  fileComplaint: async (data: { text: string; language: string }) => {
-    try {
-      const response = await api.post('/api/complaints', data);
-      return response;
-    } catch (error) {
-      console.error('Error filing complaint:', error);
-      throw error;
-    }
-  },
+  }) => api.post(`/api/complaints/${complaintId}/notes`, data)
 };
 
 // Police API calls
