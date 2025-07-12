@@ -3,7 +3,7 @@ import axios from 'axios';
 export type CaseStage = 'registration' | 'investigation' | 'chargesheet' | 'trial' | 'closed';
 
 // Create API instance with base URL from environment
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://saarthi-backend-6k14.onrender.com/';
 
 const api = axios.create({
   baseURL: API_URL,

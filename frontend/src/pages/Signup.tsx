@@ -127,7 +127,7 @@ const Signup: React.FC = () => {
     
     setError(null);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/police/register`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'https://saarthi-backend-6k14.onrender.com/'}/api/auth/police/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password
