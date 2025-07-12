@@ -304,12 +304,6 @@ const VictimDashboard: React.FC = () => {
             </ComplaintList>
           )}
         </ComplaintsSection>
-
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <ActionButton onClick={handleNewComplaint}>
-            File New Complaint
-          </ActionButton>
-        </div>
       </Content>
 
       {/* The modal will show the full text without truncation */}
