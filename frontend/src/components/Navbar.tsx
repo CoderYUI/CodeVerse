@@ -132,6 +132,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, userRole }) => {
     isAuthenticated: isAuthenticated || false,
     userRole: userRole || null
   });
+  const [tokenVerified, setTokenVerified] = useState(false);
 
   // Update internal state when props change
   useEffect(() => {
@@ -146,42 +147,111 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, userRole }) => {
   // Also listen for auth changes directly
   useEffect(() => {
     const checkAuthFromStorage = () => {
-      const token = localStorage.getItem('token');
-      const userStr = localStorage.getItem('user');
+      // Force non-authenticated state for signup-related paths
+      const pathsToForceNonAuth = ['/signup', '/register', '/signup-success'];
+      const shouldForceNonAuth = pathsToForceNonAuth.some(path => location.pathname.includes(path));
       
-      if (token && userStr) {
-        try {
-          const userData = JSON.parse(userStr);
-          setUser(userData);
-          setAuthState({
-            isAuthenticated: true,
-            userRole: userData.role
-          });
-          console.log("Navbar: Auth detected from storage", userData.role);
-        } catch (error) {
-          console.error('Navbar: Error parsing user data', error);
-          setAuthState({
-            isAuthenticated: false,
-            userRole: null
-          });
-        }
-      } else {
+      if (shouldForceNonAuth) {
+        console.log(`Navbar: On ${location.pathname}, forcing non-authenticated state`);
         setUser(null);
         setAuthState({
           isAuthenticated: false,
           userRole: null
         });
-        console.log("Navbar: No auth detected in storage");
+        setTokenVerified(false);
+        return;
       }
+      
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
+      if (!token || !userStr) {
+        handleInvalidAuthState("No token or user data found");
+        return;
+      }
+      
+      try {
+        const userData = JSON.parse(userStr);
+        // Add verification that we have valid data
+        if (userData && userData.role) {
+          // Don't set auth state here yet - wait for token verification
+          setUser(userData);
+          console.log("Navbar: User data from storage found, waiting for token verification");
+        } else {
+          handleInvalidAuthState("Invalid user data structure");
+        }
+      } catch (error) {
+        console.error('Navbar: Error parsing user data', error);
+        handleInvalidAuthState("Error parsing user data");
+      }
+    };
+    
+    // Helper function to handle invalid auth state
+    const handleInvalidAuthState = (reason = "No valid auth detected in storage") => {
+      setUser(null);
+      setAuthState({
+        isAuthenticated: false,
+        userRole: null
+      });
+      setTokenVerified(false);
+      console.log(`Navbar: ${reason}`);
     };
 
     // Check auth on mount and path change
     checkAuthFromStorage();
+    
+    // Verify token validity with the server if we think we're logged in
+    const verifyToken = async () => {
+      const pathsToSkipVerification = ['/signup', '/register', '/signup-success', '/login'];
+      const shouldSkipVerification = pathsToSkipVerification.some(path => 
+        location.pathname.includes(path)
+      );
+      
+      if (shouldSkipVerification) {
+        console.log(`Navbar: Skipping token verification on ${location.pathname}`);
+        setTokenVerified(false);
+        return;
+      }
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        handleInvalidAuthState("No token to verify");
+        return;
+      }
+      
+      try {
+        console.log("Navbar: Verifying token with server");
+        await authAPI.verifyToken();
+        
+        // Token is valid, now we can safely set the auth state
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const userData = JSON.parse(userStr);
+          if (userData && userData.role) {
+            setAuthState({
+              isAuthenticated: true,
+              userRole: userData.role
+            });
+            setTokenVerified(true);
+            console.log(`Navbar: Token verified, user authenticated as ${userData.role}`);
+          }
+        }
+      } catch (error) {
+        console.log("Navbar: Token verification failed, clearing auth state");
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        handleInvalidAuthState("Token verification failed");
+      }
+    };
+    
+    // Run token verification
+    verifyToken();
 
     // Set up listeners for auth changes
     const handleAuthChange = () => {
       console.log("Navbar: Auth change event detected");
       checkAuthFromStorage();
+      verifyToken();
     };
     
     window.addEventListener('auth-change', handleAuthChange);
@@ -201,8 +271,20 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, userRole }) => {
       userRole: null
     });
     setUser(null);
+    setTokenVerified(false);
     navigate('/');
   };
+
+  // Check if path should always show login/signup
+  const forceLoginDisplay = location.pathname.includes('/signup') || 
+                         location.pathname.includes('/register') || 
+                         location.pathname.includes('/signup-success');
+  
+  // Only show logged-in UI if:
+  // 1. We're authenticated according to state AND
+  // 2. Token has been verified with the server AND
+  // 3. We're not on a signup/register page
+  const showAuthUI = authState.isAuthenticated && tokenVerified && !forceLoginDisplay;
 
   // Use internal state for rendering
   return (
@@ -218,7 +300,7 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, userRole }) => {
           <NavLink to="/legal-guide">Legal Guide</NavLink>
           <NavLink to="/find-police-station">Find Police Station</NavLink>
           
-          {authState.isAuthenticated ? (
+          {showAuthUI ? (
             <>
               <NavLink to={`/dashboard/${authState.userRole}`}>Dashboard</NavLink>
               <Button onClick={handleLogout}>Logout</Button>

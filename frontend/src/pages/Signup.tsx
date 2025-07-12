@@ -111,34 +111,38 @@ const Signup: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setLoading(true);
     // Basic validation
     if (!formData.name || !formData.email || !formData.password) {
       setError('All fields are required');
+      setLoading(false);
       return;
     }
     
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      setLoading(false);
       return;
     }
     
-    setLoading(true);
     setError(null);
-    
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/police/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password
       });
-      
       // Store token and user data
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
       // Redirect to dashboard
-      navigate('/dashboard/police');
+      navigate('/signup-success', { replace: true });
+      
+      // Force a page reload after navigation
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error: any) {
       console.error('Registration error:', error);
       setError(error.response?.data?.error || 'Registration failed. Please try again.');
@@ -159,7 +163,6 @@ const Signup: React.FC = () => {
       <SignupForm>
         <Title>Police Officer Registration</Title>
         <Subtitle>Create an account to access the police dashboard</Subtitle>
-        
         {error && <ErrorMessage>{error}</ErrorMessage>}
         
         <Form onSubmit={handleSubmit}>
@@ -195,7 +198,6 @@ const Signup: React.FC = () => {
             onChange={handleChange}
             required
           />
-          
           {loading ? (
             <Loading>Processing...</Loading>
           ) : (
