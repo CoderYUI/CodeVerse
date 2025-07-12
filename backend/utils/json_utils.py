@@ -1,7 +1,15 @@
 from bson import ObjectId
-from flask.json import JSONEncoder
 import json
 from datetime import datetime
+from flask import Flask
+
+# Fix for newer Flask versions where JSONEncoder is not in flask.json
+try:
+    # Try the old import path first
+    from flask.json import JSONEncoder
+except ImportError:
+    # If that fails, use the built-in json.JSONEncoder
+    from json import JSONEncoder
 
 class MongoJSONEncoder(JSONEncoder):
     """
@@ -14,32 +22,24 @@ class MongoJSONEncoder(JSONEncoder):
             return obj.isoformat()
         return super(MongoJSONEncoder, self).default(obj)
 
-class MongoJSONProvider:
-    """
-    Custom JSON provider for Flask 2.0+ compatibility
-    """
-    def __init__(self, app):
-        self.app = app
-    
-    def dumps(self, obj, **kwargs):
-        return json.dumps(obj, **kwargs)
-    
-    def loads(self, s, **kwargs):
-        return json.loads(s, **kwargs)
-
 def configure_json_encoding(app):
     """
     Configure Flask app to use the custom JSONEncoder
     """
-    # For Flask 1.x
-    app.json_encoder = MongoJSONEncoder
-    
-    # For Flask 2.x+
     try:
-        app.json_provider_class = MongoJSONProvider
-        app.json = app.json_provider_class(app)
+        # For Flask < 2.2
+        app.json_encoder = MongoJSONEncoder
     except AttributeError:
-        # If using older Flask version
-        pass
+        # For Flask >= 2.2
+        from flask.json.provider import JSONProvider
+        
+        class CustomJSONProvider(JSONProvider):
+            def dumps(self, obj, **kwargs):
+                return json.dumps(obj, cls=MongoJSONEncoder, **kwargs)
+                
+            def loads(self, s, **kwargs):
+                return json.loads(s, **kwargs)
+        
+        app.json = CustomJSONProvider(app)
     
     return app
