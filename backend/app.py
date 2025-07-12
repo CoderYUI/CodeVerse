@@ -21,14 +21,16 @@ app = Flask(__name__)
 configure_json_encoding(app)
 
 # Configure CORS properly with specific origin and credentials
+# In production, we need to allow the frontend domain
+frontend_urls = os.getenv('FRONTEND_URLS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
 CORS(app, 
-     resources={r"/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"], "supports_credentials": True}}, 
+     resources={r"/*": {"origins": frontend_urls, "supports_credentials": True}}, 
      allow_headers=["Content-Type", "Authorization"],
      expose_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
 
 # Configure MongoDB
-app.config["MONGO_URI"] = os.getenv("MONGO_URI", "mongodb://localhost:27017/saarthi")
+app.config["MONGO_URI"] = os.getenv("MONGODB_URI", "mongodb://localhost:27017/saarthi")
 mongo = PyMongo(app)
 
 # Configure JWT
@@ -39,7 +41,7 @@ jwt = JWTManager(app)
 # Configure Twilio
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")  # New: Twilio phone number for sending SMS
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 # Initialize Twilio client with error handling
 twilio_client = None
@@ -117,6 +119,7 @@ def inject_twilio():
 
 # Ensure utils directory is recognized as a package
 if not os.path.exists('utils/__init__.py'):
+    os.makedirs('utils', exist_ok=True)
     with open('utils/__init__.py', 'w') as f:
         f.write('# Utilities package for SAARTHI\n')
 
@@ -129,4 +132,6 @@ app.register_blueprint(complaints.complaint_routes)
 app.register_blueprint(police.police_routes)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use PORT environment variable for cloud deployment
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
