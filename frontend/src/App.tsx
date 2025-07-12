@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import About from './pages/About'
@@ -93,39 +93,37 @@ function App() {
 
   return (
     <Router>
-      <div className="app">
-        <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/legal-guide" element={<LegalGuide />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/find-police-station" element={<FindPoliceStation />} />
+      <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/legal-guide" element={<LegalGuide />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/find-police-station" element={<FindPoliceStation />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard/police"
-            element={
-              <ProtectedRoute role="police">
-                <PoliceDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/victim"
-            element={
-              <ProtectedRoute role="victim">
-                <VictimDashboard />
-              </ProtectedRoute>
-            }
-          />
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard/police"
+          element={
+            <ProtectedRoute role="police">
+              <PoliceDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/victim"
+          element={
+            <ProtectedRoute role="victim">
+              <VictimDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Catch all route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
+        {/* Catch all route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </Router>
   )
 }
