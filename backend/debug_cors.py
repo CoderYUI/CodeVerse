@@ -3,6 +3,37 @@ A utility script to debug CORS issues
 """
 import requests
 import json
+from flask import Flask, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+
+# Configure CORS with debugging enabled
+CORS(app, 
+     resources={r"/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173", 
+                                     "https://code-verse-snowy.vercel.app"], 
+                         "supports_credentials": True}}, 
+     allow_headers=["Content-Type", "Authorization"],
+     expose_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+     vary_header=True)
+
+@app.route('/api/cors-test', methods=['GET', 'OPTIONS'])
+def cors_test():
+    """Test endpoint to verify CORS is working properly"""
+    return jsonify({
+        "message": "CORS is configured correctly",
+        "status": "success"
+    })
+
+@app.after_request
+def after_request(response):
+    """Print response headers for debugging"""
+    print("\n--- Response Headers ---")
+    for header, value in response.headers:
+        print(f"{header}: {value}")
+    print("----------------------\n")
+    return response
 
 def test_cors():
     """
@@ -37,4 +68,11 @@ def test_cors():
         print(f"Error: {str(e)}")
 
 if __name__ == "__main__":
-    test_cors()
+    print("Starting CORS debugging server...")
+    print("Test endpoints:")
+    print("- GET /api/cors-test - Returns success message if CORS is working")
+    print("\nCORS is configured for origins:")
+    print("- http://localhost:5173")
+    print("- http://127.0.0.1:5173")
+    print("- https://code-verse-snowy.vercel.app")
+    app.run(debug=True, port=5001)

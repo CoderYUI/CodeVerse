@@ -2,15 +2,16 @@ import axios from 'axios';
 // Define CaseStage enum or type
 export type CaseStage = 'registration' | 'investigation' | 'chargesheet' | 'trial' | 'closed';
 
-// Create API instance with base URL from environment
-const API_URL = import.meta.env.VITE_API_URL || 'https://saarthi-backend-6k14.onrender.com/';
+// Get the API base URL from environment or use the default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://saarthi-backend-6k14.onrender.com';
 
+// Create an axios instance with the correct configuration
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true
+  withCredentials: true, // Important for cookies/auth
 });
 
 // Function to dispatch auth change event
@@ -18,21 +19,17 @@ const notifyAuthChange = () => {
   window.dispatchEvent(new Event('auth-change'));
 };
 
-// Add request interceptor to include JWT token in requests
+// Add request interceptor to include token in headers
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Ensure token format is correct with Bearer prefix
-      config.headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-      console.log('Request with token to:', config.url);
-    } else {
-      console.log('Request without token to:', config.url);
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log("Request with token to:", config.url);
     }
     return config;
   },
   (error) => {
-    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -167,5 +164,4 @@ export const policeAPI = {
   getIPCSections: () => api.get('/api/police/ipc-sections'),
   getLegalRights: () => api.get('/api/police/legal-rights')
 };
-
 export default api;
