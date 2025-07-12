@@ -3,7 +3,7 @@ import axios from 'axios';
 export type CaseStage = 'registration' | 'investigation' | 'chargesheet' | 'trial' | 'closed';
 
 // Get the API base URL from environment or use the default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://saarthi-backend-6k14.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://saarthi-backend-6k14.onrender.com';
 
 // Create an axios instance with the correct base URL
 // The double slash in the URL was causing issues in the API requests
