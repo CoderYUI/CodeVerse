@@ -14,7 +14,7 @@ export default defineConfig({
         },
       },
     },
-    // Enable this for better error handling
+    // Enable source maps for better debugging
     sourcemap: true,
   },
   resolve: {
@@ -28,4 +28,13 @@ export default defineConfig({
     host: true,
     cors: true,
   },
+  // Add a copy plugin configuration to ensure all HTML files are properly handled
+  publicDir: 'public',
+  // Handle SPA routing in development mode
+  preview: {
+    port: 4173,
+    strictPort: true,
+    host: true,
+    cors: true,
+  }
 });
