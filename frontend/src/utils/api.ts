@@ -5,9 +5,10 @@ export type CaseStage = 'registration' | 'investigation' | 'chargesheet' | 'tria
 // Get the API base URL from environment or use the default
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://saarthi-backend-6k14.onrender.com';
 
-// Create an axios instance with the correct configuration
+// Create an axios instance with the correct base URL
+// The double slash in the URL was causing issues in the API requests
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: 'https://saarthi-backend-6k14.onrender.com',  // Note: removed the trailing slash
   headers: {
     'Content-Type': 'application/json',
   },

@@ -42,7 +42,8 @@ CORS(app,
      methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
 
 # Configure MongoDB
-app.config["MONGO_URI"] = os.getenv("MONGODB_URI", "mongodb://localhost:27017/saarthi")
+# Use MongoDB Atlas URI from environment variable, with a clear fallback
+app.config["MONGO_URI"] = os.getenv("MONGODB_URI", "mongodb+srv://yui:thatsme@nyayacop.f9dkeuw.mongodb.net/saarthi")
 mongo = PyMongo(app)
 
 # Configure JWT
