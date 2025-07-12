@@ -1,32 +1,41 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
 import os
+from flask_pymongo import PyMongo  # Make sure this import is properly included
+from bson.objectid import ObjectId
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from datetime import timedelta, timezone, datetime
+import random
+import string
+from twilio.rest import Client
+from utils.json_utils import configure_json_encoding
 
 # Load environment variables
-from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Get allowed origins from environment variable or hardcode for now
+# Configure JSON encoding for MongoDB objects
+configure_json_encoding(app)
+
+# Get allowed origins from environment variable
 frontend_urls = os.getenv('FRONTEND_URLS', 'https://code-verse-snowy.vercel.app,http://localhost:5173,http://127.0.0.1:5173').split(',')
 
 print("CORS allowed origins:", frontend_urls)
 
-CORS(
-    app,
-    origins=frontend_urls,
-    supports_credentials=True,
-    allow_headers=["Content-Type", "Authorization"],
-    expose_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-)
+# Configure CORS properly with specific origin and credentials
+CORS(app, 
+     resources={r"/*": {"origins": frontend_urls}}, 
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     expose_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
 
 # Configure MongoDB
-# Use MongoDB Atlas URI from environment variable, with a clear fallback
-app.config["MONGO_URI"] = os.getenv("MONGODB_URI", "mongodb+srv://yui:thatsme@nyayacop.f9dkeuw.mongodb.net/saarthi")
-mongo = PyMongo(app)
+app.config["MONGO_URI"] = os.getenv("MONGODB_URI", "mongodb+srv://yui:me@nyayacop.f9dkeuw.mongodb.net/saarthi")
+mongo = PyMongo(app)  # Now PyMongo is properly defined
 
 # Configure JWT
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "".join(random.choices(string.ascii_letters + string.digits, k=32)))
@@ -37,6 +46,7 @@ jwt = JWTManager(app)
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+TWILIO_SERVICE_ID = os.getenv("TWILIO_SERVICE_ID")
 
 # Initialize Twilio client with error handling
 twilio_client = None
@@ -130,16 +140,6 @@ if __name__ == '__main__':
     # Use PORT environment variable for cloud deployment
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-# Ensure utils directory is recognized as a package
-if not os.path.exists('utils/__init__.py'):
-    os.makedirs('utils', exist_ok=True)
-    with open('utils/__init__.py', 'w') as f:
-        f.write('# Utilities package for SAARTHI\n')
-
-# Import routes after app initialization to avoid circular imports
-from routes import auth, complaints, police
-
-# Register blueprints
 app.register_blueprint(auth.auth_routes)
 app.register_blueprint(complaints.complaint_routes)
 app.register_blueprint(police.police_routes)
