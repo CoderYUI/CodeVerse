@@ -1,10 +1,10 @@
-# SAARTHI - AI-Powered Legal Assistance Platform
+# NyayaCop - AI-Powered Legal Assistance Platform
 
 ![SAARTHI Logo](frontend/public/assets/nyayacop-logo.svg)
 
 ## Overview
 
-SAARTHI is an AI-powered legal assistance platform designed to help victims easily file complaints with police departments and navigate the legal system in India. The platform leverages artificial intelligence to classify complaints, suggest relevant IPC sections, and guide users through the complaint filing process, all while ensuring the integrity and security of data through blockchain verification.
+NyayaCop is an AI-powered legal assistance platform designed to help victims easily file complaints with police departments and navigate the legal system in India. The platform leverages artificial intelligence to classify complaints, suggest relevant IPC sections, and guide users through the complaint filing process, all while ensuring the integrity and security of data through blockchain verification.
 
 ## Table of Contents
 1. [Technology Stack](#technology-stack)
@@ -62,7 +62,7 @@ SAARTHI is an AI-powered legal assistance platform designed to help victims easi
 
 ## Architecture
 
-SAARTHI follows a modern microservices architecture with the following components:
+NyayaCop follows a modern microservices architecture with the following components:
 
 The architecture includes:
 - A React-based frontend deployed on Vercel
