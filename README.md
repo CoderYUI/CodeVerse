@@ -414,7 +414,7 @@ For hackathon presentations, we've prepared:
 5. Run the application (backend and frontend)
 6. Open your browser and navigate to the frontend URL
 
-##Contributors:
+## Contributors:
 1. Bhaskar Ojha  [Backend]
 2. Anushka Dubey [Frontend]
 3. S Dhanush  [Blockchain]
