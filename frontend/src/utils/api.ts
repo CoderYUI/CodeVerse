@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://saarthi-backend-6k
 // Create an axios instance with the correct base URL
 // The double slash in the URL was causing issues in the API requests
 const api = axios.create({
-  baseURL: 'https://saarthi-backend-6k14.onrender.com',  // Note: removed the trailing slash
+  baseURL: 'http://localhost:5000',  // Note: removed the trailing slash
   headers: {
     'Content-Type': 'application/json',
   },

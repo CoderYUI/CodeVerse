@@ -34,16 +34,16 @@ if 'https://code-verse-snowy.vercel.app' not in frontend_urls:
 
 print(f"Allowing CORS for origins: {frontend_urls}")
 
-# Configure CORS properly with specific origin and credentials
+# Simplified CORS configuration for development
 CORS(app, 
-     resources={r"/*": {"origins": frontend_urls, "supports_credentials": True}}, 
+     origins=frontend_urls,
+     supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"],
-     expose_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
 
 # Configure MongoDB
 # Use MongoDB Atlas URI from environment variable, with a clear fallback
-app.config["MONGO_URI"] = os.getenv("MONGODB_URI", "mongodb+srv://yui:thatsme@nyayacop.f9dkeuw.mongodb.net/saarthi")
+app.config["MONGO_URI"] = os.getenv("MONGODB_URI", "mongodb://localhost:27017/saarthi")
 mongo = PyMongo(app)
 
 # Configure JWT
